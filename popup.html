@@ -1,34 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Bookmarks</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="header">
-        <h2>AI Bookmark Manager</h2>
+        <div>
+            <h2 class="title">AI Bookmarks Organizer</h2>
+            <p class="subtitle">Organize bookmarks with AI</p>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search-box" placeholder="Search Bookmarks...">
+        </div>
+        <div id="category-filter-pills">
+        </div>
     </div>
+
+    <div id="results-count"></div>
 
     <div id="init-screen">
         <button id="scan-button">Scan Bookmarks</button>
+        <button id="reset-button" class="btn-danger">Reset Cache</button>
     </div>
 
     <div id="loading-screen" class="hidden">
         <div class="loader"></div>
-        <p>Scanning bookmarks... (This may take a minute)</p>
-        <p id="loading-status"></p>
+        <p id="loading-status">Scanning bookmarks...</p>
     </div>
 
     <div id="error-screen" class="hidden">
         <p><strong>AI Not Available.</strong></p>
-        <p>Please ensure you are on Chrome 127+ and have enabled the on-device AI from chrome://flags.</p>
     </div>
 
     <div id="results-container">
-        </div>
+    </div>
 
     <script src="popup.js"></script>
 </body>
+
 </html>
