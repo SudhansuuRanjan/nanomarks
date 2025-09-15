@@ -1,33 +1,120 @@
-*{
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* --- 1. COLOR & THEME VARIABLES --- */
+:root {
+    --bg-color: #f4f7f9;
+    --text-color: #333;
+    --text-color-light: #555;
+    --card-bg: #ffffff;
+    --border-color: #ddd;
+    --header-border: #e0e0e0;
+    --pill-bg: #fff;
+    --pill-border: #ccc;
+    --pill-hover-bg: #f0f0f0;
+    --primary-color: #0b57d0;
+    --primary-color-hover: #0a4cb0;
+    --primary-text-light: #eaf2ff;
+    --danger-color: #d93025;
+    --danger-hover: #a52714;
+    --loader-track: #f3f3f3;
+    --slider-bg: #ccc;
 }
+
+.dark-mode {
+    --bg-color: #202124;
+    --text-color: #e8eaed;
+    --text-color-light: #bdc1c6;
+    --card-bg: #2d2e30;
+    --border-color: #444;
+    --header-border: #444;
+    --pill-bg: #3c4043;
+    --pill-border: #5f6368;
+    --pill-hover-bg: #4e5256;
+    --primary-color: #8ab4f8; /* Lighter blue for dark mode */
+    --primary-color-hover: #9ac0f9;
+    --primary-text-light: #3c4043; /* Darker bg for light blue text */
+    --danger-color: #ea5244;
+    --danger-hover: #ec7368;
+    --loader-track: #444;
+    --slider-bg: #5f6368;
+}
+/* --- END OF THEMES --- */
+
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f9;
-    color: #333;
-    /* --- MODIFIED: Made popup larger --- */
-    width: 600px;
-    max-height: 700px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    width: 500px;
+    max-height: 600px; 
     overflow-y: auto;
     margin: 0;
     padding: 16px;
     box-sizing: border-box;
-}
-
-.header {
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 16px;
-    margin-bottom: 12px;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* --- NEW: Filter and Search Styles from Sketch --- */
+/* --- NEW: Title Bar & Theme Toggle --- */
+.title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.title-bar h2 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+.theme-switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--slider-bg);
+    transition: .4s;
+    border-radius: 28px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+/* --- END THEME TOGGLE --- */
+
+.header {
+    border-bottom: 2px solid var(--header-border);
+    padding-bottom: 16px;
+    margin-bottom: 12px;
+}
+
 .search-container {
     width: 100%;
     margin-bottom: 12px;
@@ -37,103 +124,101 @@ body {
     width: 100%;
     padding: 10px 14px;
     font-size: 16px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg); /* Use card bg for inputs */
+    color: var(--text-color);
     border-radius: 8px;
     box-sizing: border-box;
-    margin-top: 16px;
-    /* Ensures padding doesn't break layout */
 }
 
 #category-filter-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
 }
 
 .category-pill {
     padding: 6px 14px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    background-color: #fff;
-    border: 1px solid #ccc;
+    background-color: var(--pill-bg);
+    color: var(--text-color-light);
+    border: 1px solid var(--pill-border);
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .category-pill:hover {
-    background-color: #f0f0f0;
+    background-color: var(--pill-hover-bg);
 }
-
-/* This is the selected pill button */
 .category-pill.active {
-    background-color: #0b57d0;
-    color: #fff;
-    border-color: #0b57d0;
+    background-color: var(--primary-color);
+    color: var(--bg-color); /* Use bg color for contrast on primary */
+    border-color: var(--primary-color);
+}
+.dark-mode .category-pill.active {
+    color: #202124; /* Force dark text on light blue bg */
 }
 
 #results-count {
     font-size: 14px;
-    color: #555;
+    color: var(--text-color-light);
     margin-bottom: 12px;
 }
 
-/* --- END NEW STYLES --- */
-
-
-/* --- Scan Button / Screens --- */
-
-/* Add these new/modified styles to style.css */
-
-/* Modify this existing style to use flexbox for the buttons */
 #init-screen {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 10px 0;
-    margin-bottom: 12px;
-}
-
-/* Add this new style for the danger button */
-.btn-danger {
-    background-color: #d93025;
-    /* Google's destructive action color */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.btn-danger:hover {
-    background-color: #a52714;
+    width: 100%;
 }
 
 #scan-button {
-    background-color: #0b57d0;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--bg-color);
     border: none;
     padding: 10px 20px;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 500;
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
+    flex-grow: 1;
 }
-
+.dark-mode #scan-button {
+     color: #202124; /* Force dark text on light blue bg */
+}
 #scan-button:hover {
-    background-color: #0a4cb0;
+    background-color: var(--primary-color-hover);
 }
-
 #scan-button:disabled {
-    background-color: #ccc;
+    background-color: var(--slider-bg);
+    color: var(--text-color-light);
     cursor: not-allowed;
     opacity: 0.7;
 }
 
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.dark-mode .btn-danger {
+    color: #202124; /* Force dark text */
+}
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+}
+
 #error-screen {
-    background-color: #fdeeee;
+    background-color: #fdeeee; /* Keep light error colors */
     color: #c00;
     border: 1px solid #f0cccc;
     padding: 10px;
@@ -141,37 +226,19 @@ body {
     text-align: center;
 }
 
-/* --- Loader --- */
-#loading-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 20px 0;
-    color: #555;
-    font-size: 14px;
-}
-
 .loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #0b57d0;
+    border: 4px solid var(--loader-track);
+    border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     width: 30px;
     height: 30px;
     animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* --- Bookmark Card (already matches sketch well) --- */
 #results-container {
     display: flex;
     flex-direction: column;
@@ -179,82 +246,21 @@ body {
 }
 
 .bookmark-card {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 12px;
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     position: relative;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.dark-mode .bookmark-card {
+    box-shadow: none;
 }
 
-.card-favicon {
-    width: 32px;
-    /* Made favicon slightly larger */
-    height: 32px;
-    flex-shrink: 0;
-    margin-top: 4px;
-    border-radius: 50%;
-    /* Rounded like sketch */
-}
-
-.card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    overflow: hidden;
-}
-
-.card-title {
-    font-weight: 600;
-    font-size: 16px;
-    /* Larger title */
-    color: #222;
-    text-decoration: none;
-}
-
-.card-title:hover {
-    text-decoration: underline;
-    color: #0b57d0;
-}
-
-.card-summary {
-    font-size: 14px;
-    /* Slightly larger description */
-    color: #555;
-    line-height: 1.4;
-}
-
-.card-category {
-    font-size: 12px;
-    font-weight: 500;
-    color: #1c9703;
-    background-color: #daffde;
-    border: #1c9703 1px solid;
-    padding: 3px 8px;
-    border-radius: 6px;
-    /* Less rounded tag */
-    align-self: flex-start;
-}
-
-/* ADD THIS NEW CLASS TO YOUR style.css FILE */
-
-.card-url {
-    font-size: 13px;
-    color: #0b57d0; /* This is the blue color you requested */
-    text-decoration: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-url:hover {
-    text-decoration: underline;
-}
-
-/* Add this new class for the delete button */
 .delete-bookmark-btn {
     position: absolute;
     top: 8px;
@@ -263,7 +269,7 @@ body {
     height: 24px;
     border: none;
     background: none;
-    color: #999;
+    color: var(--text-color-light);
     font-size: 24px;
     font-weight: bold;
     line-height: 24px;
@@ -272,8 +278,173 @@ body {
     cursor: pointer;
     transition: all 0.2s;
 }
-
 .delete-bookmark-btn:hover {
-    color: #000;
-    background-color: #f0f0f0;
+    color: var(--text-color);
+    background-color: var(--pill-hover-bg);
+}
+
+.card-favicon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    margin-top: 4px;
+    border-radius: 50%;
+    background-color: #fff; /* Always add white bg to favicons */
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden; 
+    width: calc(100% - 70px);
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-color);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.card-title:hover {
+    text-decoration: underline;
+    color: var(--primary-color);
+}
+
+.card-url {
+    font-size: 13px;
+    color: var(--primary-color); 
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.card-url:hover {
+    text-decoration: underline;
+}
+
+.card-category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px; 
+}
+
+.card-category {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-color);
+    background-color: var(--primary-text-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    align-self: flex-start;
+}
+.dark-mode .card-category {
+    color: #e8eaed; /* Light text */
+    background-color: #3c4043; /* Dark bg */
+}
+
+.card-summary {
+    font-size: 14px;
+    color: var(--text-color-light);
+    line-height: 1.4;
+    margin-top: 4px; 
+}
+
+.subheading{
+    font-size: 12px;
+    color: var(--text-color-light);
+    margin-top: 4px;
+}
+
+/* --- ADD THESE NEW/MODIFIED STYLES to your style.css file --- */
+
+/* Wrapper for the action icons in the title bar */
+.title-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Base style for new icon-only buttons (Export, Add Page) */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--pill-hover-bg);
+    color: var(--text-color-light);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-icon:hover {
+    background-color: var(--border-color);
+    color: var(--text-color);
+}
+.dark-mode .btn-icon:hover {
+     background-color: var(--pill-hover-bg);
+}
+.btn-icon .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* Style for disabled icon buttons */
+.btn-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: var(--pill-bg);
+}
+
+/* Small loader for the add bookmark button */
+.loader-small {
+    border: 3px solid var(--loader-track);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 18px; /* Make it small to fit in the button */
+    height: 18px;
+    animation: spin 1s linear infinite;
+}
+
+/* Center the small loader inside the button */
+.btn-icon .loader-small {
+    margin: auto;
+}
+
+/* --- Search Container --- */
+.search-container {
+    width: 100%;
+    margin-bottom: 12px;
+    position: relative; 
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    color: var(--text-color-light);
+    font-size: 22px;
+}
+
+#search-box {
+    width: 100%;
+    padding: 10px 14px 10px 44px; /* Added 44px left padding */
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.subheading {
+    font-size: 14px;
+    color: var(--text-color-light);
+    margin: 0;
+    font-weight: 400;
 }
