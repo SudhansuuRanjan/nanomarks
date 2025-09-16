@@ -28,14 +28,17 @@
     --pill-bg: #3c4043;
     --pill-border: #5f6368;
     --pill-hover-bg: #4e5256;
-    --primary-color: #8ab4f8; /* Lighter blue for dark mode */
+    --primary-color: #8ab4f8;
+    /* Lighter blue for dark mode */
     --primary-color-hover: #9ac0f9;
-    --primary-text-light: #3c4043; /* Darker bg for light blue text */
+    --primary-text-light: #3c4043;
+    /* Darker bg for light blue text */
     --danger-color: #ea5244;
     --danger-hover: #ec7368;
     --loader-track: #444;
     --slider-bg: #5f6368;
 }
+
 /* --- END OF THEMES --- */
 
 
@@ -43,8 +46,8 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    width: 500px;
-    max-height: 600px; 
+    width: 600px;
+    max-height: 720px;
     overflow-y: auto;
     margin: 0;
     padding: 16px;
@@ -63,6 +66,7 @@ body {
     align-items: center;
     margin-bottom: 12px;
 }
+
 .title-bar h2 {
     margin: 0;
     color: var(--primary-color);
@@ -74,11 +78,13 @@ body {
     width: 50px;
     height: 28px;
 }
-.theme-switch input { 
+
+.theme-switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
+
 .slider {
     position: absolute;
     cursor: pointer;
@@ -90,6 +96,7 @@ body {
     transition: .4s;
     border-radius: 28px;
 }
+
 .slider:before {
     position: absolute;
     content: "";
@@ -101,12 +108,15 @@ body {
     transition: .4s;
     border-radius: 50%;
 }
-input:checked + .slider {
+
+input:checked+.slider {
     background-color: var(--primary-color);
 }
-input:checked + .slider:before {
+
+input:checked+.slider:before {
     transform: translateX(22px);
 }
+
 /* --- END THEME TOGGLE --- */
 
 .header {
@@ -125,7 +135,8 @@ input:checked + .slider:before {
     padding: 10px 14px;
     font-size: 16px;
     border: 1px solid var(--border-color);
-    background-color: var(--card-bg); /* Use card bg for inputs */
+    background-color: var(--card-bg);
+    /* Use card bg for inputs */
     color: var(--text-color);
     border-radius: 8px;
     box-sizing: border-box;
@@ -148,16 +159,21 @@ input:checked + .slider:before {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .category-pill:hover {
     background-color: var(--pill-hover-bg);
 }
+
 .category-pill.active {
     background-color: var(--primary-color);
-    color: var(--bg-color); /* Use bg color for contrast on primary */
+    color: var(--bg-color);
+    /* Use bg color for contrast on primary */
     border-color: var(--primary-color);
 }
+
 .dark-mode .category-pill.active {
-    color: #202124; /* Force dark text on light blue bg */
+    color: #202124;
+    /* Force dark text on light blue bg */
 }
 
 #results-count {
@@ -186,12 +202,16 @@ input:checked + .slider:before {
     transition: background-color 0.2s;
     flex-grow: 1;
 }
+
 .dark-mode #scan-button {
-     color: #202124; /* Force dark text on light blue bg */
+    color: #202124;
+    /* Force dark text on light blue bg */
 }
+
 #scan-button:hover {
     background-color: var(--primary-color-hover);
 }
+
 #scan-button:disabled {
     background-color: var(--slider-bg);
     color: var(--text-color-light);
@@ -210,15 +230,19 @@ input:checked + .slider:before {
     cursor: pointer;
     transition: background-color 0.2s;
 }
+
 .dark-mode .btn-danger {
-    color: #202124; /* Force dark text */
+    color: #202124;
+    /* Force dark text */
 }
+
 .btn-danger:hover {
     background-color: var(--danger-hover);
 }
 
 #error-screen {
-    background-color: #fdeeee; /* Keep light error colors */
+    background-color: #fdeeee;
+    /* Keep light error colors */
     color: #c00;
     border: 1px solid #f0cccc;
     padding: 10px;
@@ -234,15 +258,22 @@ input:checked + .slider:before {
     height: 30px;
     animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 #results-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-bottom: 12px;
 }
 
 .bookmark-card {
@@ -253,10 +284,11 @@ input:checked + .slider:before {
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     position: relative;
     transition: background-color 0.2s, border-color 0.2s;
 }
+
 .dark-mode .bookmark-card {
     box-shadow: none;
 }
@@ -278,6 +310,7 @@ input:checked + .slider:before {
     cursor: pointer;
     transition: all 0.2s;
 }
+
 .delete-bookmark-btn:hover {
     color: var(--text-color);
     background-color: var(--pill-hover-bg);
@@ -289,14 +322,15 @@ input:checked + .slider:before {
     flex-shrink: 0;
     margin-top: 4px;
     border-radius: 50%;
-    background-color: #fff; /* Always add white bg to favicons */
+    background-color: #fff;
+    /* Always add white bg to favicons */
 }
 
 .card-content {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    overflow: hidden; 
+    overflow: hidden;
     width: calc(100% - 70px);
 }
 
@@ -309,6 +343,7 @@ input:checked + .slider:before {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .card-title:hover {
     text-decoration: underline;
     color: var(--primary-color);
@@ -316,12 +351,13 @@ input:checked + .slider:before {
 
 .card-url {
     font-size: 13px;
-    color: var(--primary-color); 
+    color: var(--primary-color);
     text-decoration: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .card-url:hover {
     text-decoration: underline;
 }
@@ -330,7 +366,7 @@ input:checked + .slider:before {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 4px; 
+    margin-top: 4px;
 }
 
 .card-category {
@@ -342,19 +378,22 @@ input:checked + .slider:before {
     border-radius: 6px;
     align-self: flex-start;
 }
+
 .dark-mode .card-category {
-    color: #e8eaed; /* Light text */
-    background-color: #3c4043; /* Dark bg */
+    color: #e8eaed;
+    /* Light text */
+    background-color: #3c4043;
+    /* Dark bg */
 }
 
 .card-summary {
     font-size: 14px;
     color: var(--text-color-light);
     line-height: 1.4;
-    margin-top: 4px; 
+    margin-top: 4px;
 }
 
-.subheading{
+.subheading {
     font-size: 12px;
     color: var(--text-color-light);
     margin-top: 4px;
@@ -383,13 +422,16 @@ input:checked + .slider:before {
     justify-content: center;
     transition: all 0.2s ease;
 }
+
 .btn-icon:hover {
     background-color: var(--border-color);
     color: var(--text-color);
 }
+
 .dark-mode .btn-icon:hover {
-     background-color: var(--pill-hover-bg);
+    background-color: var(--pill-hover-bg);
 }
+
 .btn-icon .material-symbols-outlined {
     font-size: 20px;
 }
@@ -406,7 +448,8 @@ input:checked + .slider:before {
     border: 3px solid var(--loader-track);
     border-top: 3px solid var(--primary-color);
     border-radius: 50%;
-    width: 18px; /* Make it small to fit in the button */
+    width: 18px;
+    /* Make it small to fit in the button */
     height: 18px;
     animation: spin 1s linear infinite;
 }
@@ -420,7 +463,7 @@ input:checked + .slider:before {
 .search-container {
     width: 100%;
     margin-bottom: 12px;
-    position: relative; 
+    position: relative;
 }
 
 .search-icon {
@@ -433,7 +476,8 @@ input:checked + .slider:before {
 
 #search-box {
     width: 100%;
-    padding: 10px 14px 10px 44px; /* Added 44px left padding */
+    padding: 10px 14px 10px 44px;
+    /* Added 44px left padding */
     font-size: 16px;
     border: 1px solid var(--border-color);
     background-color: var(--card-bg);
@@ -447,4 +491,114 @@ input:checked + .slider:before {
     color: var(--text-color-light);
     margin: 0;
     font-weight: 400;
+}
+
+/* ADD THESE NEW STYLES to your style.css file */
+
+/* Container for the new action buttons on each card */
+.card-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Base style for the new action buttons (Star, Eye, Copy) */
+.card-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-color-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background-color: var(--pill-hover-bg);
+    color: var(--text-color);
+}
+
+/* Icon size within the buttons */
+.card-action-btn .material-symbols-outlined {
+    font-size: 20px;
+    font-variation-settings: 'FILL' 0;
+    transition: font-variation-settings 0.2s;
+}
+
+/* Active "Yellow Star" state for Important button */
+.card-action-btn.important-active {
+    color: #FFD700;
+    /* Gold */
+}
+
+.dark-mode .card-action-btn.important-active {
+    color: #FFC107;
+    /* Dark mode gold */
+}
+
+/* Active "Viewed Eye" state */
+.card-action-btn.viewed-active {
+    color: var(--primary-color);
+}
+
+/* Style for the card itself when marked as 'viewed' */
+.bookmark-card.is-viewed .card-content {
+    opacity: 0.6;
+}
+
+.bookmark-card.is-viewed:hover .card-content {
+    opacity: 1;
+    /* Bring back on hover */
+}
+
+/* ADD THESE NEW RULES to your style.css */
+
+
+
+/* This is the rule that was missing: */
+/* When the button has the "important" class, find the icon inside it... */
+.card-action-btn.important-active .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1;
+    /* ...and set its FILL axis to 1 */
+}
+
+
+/* ADD THESE NEW STYLES to your style.css file */
+
+/* New wrapper for the result count and view filter */
+.filter-bar-secondary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+#results-count {
+    font-size: 14px;
+    color: var(--text-color-light);
+    margin: 0; /* Removed margin-bottom */
+}
+
+/* Style for the new <select> dropdown */
+#view-status-filter {
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: var(--pill-bg);
+    color: var(--text-color-light);
+    border: 1px solid var(--pill-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#view-status-filter:focus {
+    outline: 2px solid var(--primary-color);
 }

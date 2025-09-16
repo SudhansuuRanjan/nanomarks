@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Bookmark Sorter",
+  "name": "NanoMark",
   "version": "1.0",
   "description": "Uses on-device AI to categorize and summarize bookmarks.",
   "permissions": [

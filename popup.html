@@ -40,8 +40,17 @@
         </div>
     </div>
 
-    <div id="results-count"></div>
-
+    <div class="filter-bar-secondary">
+        <div id="results-count"></div>
+        <div>
+            <span>Status: </span>
+            <select id="view-status-filter">
+                <option value="all-status" selected>All Items</option>
+                <option value="unviewed">Unviewed</option>
+                <option value="viewed">Viewed</option>
+            </select>
+        </div>
+    </div>
     <div id="init-screen">
         <button id="scan-button">Scan Bookmarks</button>
         <button id="reset-button" class="btn-danger">Reset Cache</button>
