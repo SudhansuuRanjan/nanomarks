@@ -152,22 +152,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // --- 1. Main Initialization Function (MODIFIED) ---
+  // --- 1. Main Initialization Function (FIXED) ---
   async function initializeApp() {
     if (!self.LanguageModel) {
       return showError(
         "The LanguageModel API is not available in your browser.",
       );
     }
-    // Check for user activation.
-    if (navigator.userActivation.isActive) {
-      // Create an instance of a built-in API
-      const aiAvailability = await LanguageModel.availability();
-      if (aiAvailability === "unavailable") {
-        return showError(
-          "On-device AI is not available. Check hardware requirements (4GB+ VRAM).",
-        );
-      }
-    }
+
+    // --- REMOVED THE BLOCKING AVAILABILITY CHECK ---
+    // The createSession() function, called by scan/add,
+    // will handle the download and show progress via its monitor.
+    // This allows the popup UI to load instantly.
 
     showLoading("Loading saved progress...");
 
