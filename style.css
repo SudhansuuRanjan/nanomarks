@@ -602,3 +602,31 @@ input:checked+.slider:before {
 #view-status-filter:focus {
     outline: 2px solid var(--primary-color);
 }
+
+/* ADD THESE STYLES to your style.css */
+
+/* This wrapper will hold the left-aligned icon buttons */
+.card-action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+/* This is the new style for the date */
+.card-date {
+    font-size: 12px;
+    color: var(--text-color-light);
+    align-self: center; /* Vertically aligns with the action buttons */
+}
+
+
+/* MODIFY your existing .card-actions rule to look like this: */
+.card-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    /* Add these two new lines to space out the buttons and the date */
+    justify-content: space-between;
+    align-items: center;
+}
