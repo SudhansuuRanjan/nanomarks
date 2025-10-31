@@ -9,8 +9,8 @@ All processing is done **100% locally** on your machine. Your data, URLs, and br
 ## Features
 
 * **On-Device AI Analysis:** Uses Chrome's built-in `LanguageModel` API to analyze your bookmarks without sending data to a server.
-* **Smart Multi-Categorization:** Automatically assigns one or more relevant, hard-coded categories (like "Programming," "AI," "Utility," "Shopping") to every bookmark.
-* **AI Summaries:** Generates a clean, one-sentence summary for each link based on its title and URL.
+* **Smart Multi-Categorization:** Automatically assigns one or more relevant, pre-seeded categories (like "Programming," "AI," "Utility," "Shopping") to every bookmark, you can also delete these or create your own.
+* **AI Summaries:** Generates a clean, one-sentence summary for each link based on its title and URL and webpage content(of current page).
 * **Persistent Caching:** All AI data is saved locally. You only need to scan bookmarks once. The extension automatically picks up new bookmarks that need analysis.
 * **Modern Interface:** A clean, card-based UI that shows the bookmark's favicon, title, base URL, categories, and summary.
 * **Advanced Filtering & Search:**
