@@ -510,17 +510,58 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!tab || !tab.url || !tab.id || !tab.url.startsWith("http")) return;
 
     addPageButton.disabled = true;
-    addPageButton.innerHTML = `<div class="loader-small"></div>`;
+    addPageButton.innerHTML = `<div class="loader-small"></div>`; // This function will be injected into the active tab to scrape its content.
+
+    function scrapePageContent() {
+      // Try to find the main content, fall back to the whole body
+      const mainEl = document.querySelector("main");
+      const articleEl = document.querySelector("article");
+      let content = "";
+      if (articleEl) {
+        content = articleEl.innerText;
+      } else if (mainEl) {
+        content = mainEl.innerText;
+      } else if (document.body) {
+        content = document.body.innerText;
+      } else {
+        content = ""; // Fallback for pages without a body
+      } // Clean up excessive whitespace and limit size to avoid overwhelming the model
+
+      const cleanedContent = content.replace(/\s+/g, " ").trim(); // Limit to ~4k characters to avoid token limits
+      return cleanedContent.substring(0, 4000);
+    }
 
     let newNode, aiSession;
     try {
+      // --- Step 1: Scrape page content ---
+      let pageContent = null;
+      try {
+        const injectionResults = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: scrapePageContent,
+        }); // executeScript returns an array of results
+        if (
+          injectionResults &&
+          injectionResults[0] &&
+          injectionResults[0].result
+        ) {
+          pageContent = injectionResults[0].result;
+        }
+      } catch (scriptError) {
+        console.warn(
+          `Could not scrape page content: ${scriptError.message}. Proceeding with URL/title only.`,
+        ); // This can fail on protected pages (like the Chrome Web Store).
+        // We'll just continue without the content, which is fine.
+      } // --- Step 2: Create the bookmark (unchanged) ---
+
       newNode = await chrome.bookmarks.create({
         title: tab.title,
         url: tab.url,
-      });
-      aiSession = await createSession();
-      const aiData = await getAiAnalysis(aiSession, newNode);
-      aiSession.destroy();
+      }); // --- Step 3: Run AI Analysis (MODIFIED) ---
+
+      aiSession = await createSession(); // Pass the scraped pageContent to the analysis function
+      const aiData = await getAiAnalysis(aiSession, newNode, pageContent);
+      aiSession.destroy(); // --- Step 4: Process results (unchanged) ---
 
       let cacheData;
       if (
@@ -529,7 +570,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         Array.isArray(aiData.category) &&
         aiData.category.length > 0
       ) {
-        // NEW: Filter AI response to only include *valid* categories
         const validCategories = aiData.category.filter((cat) =>
           categorySet.has(cat),
         );
@@ -557,7 +597,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           isViewed: false,
         };
       }
-      // newNode object from chrome.bookmarks.create() *also* has a dateAdded property!
       const fullData = { ...newNode, ...cacheData };
 
       masterBookmarkList.unshift(fullData);
@@ -571,6 +610,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       addPageButton.innerHTML = `<span class="material-symbols-outlined">check</span>`;
       addPageButton.title = "Bookmarked and Analyzed!";
     } catch (e) {
+      // This error handler now catches errors from scripting, bookmarking, or AI
       showError(`Failed to add bookmark: ${e.message}`);
       addPageButton.innerHTML = `<span class="material-symbols-outlined">bookmark_add</span>`;
       addPageButton.disabled = false;
@@ -669,15 +709,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  async function getAiAnalysis(session, bookmark) {
-    const prompt = `
-            Analyze the following bookmark and classify it.
-            Title: "${bookmark.title || "Untitled"}"
-            URL: "${bookmark.url}"
+  async function getAiAnalysis(session, bookmark, pageContent = null) {
+    // Dynamically build the prompt based on available content
+    let promptContext = `
+              Analyze the following bookmark and classify it.
+              Title: "${bookmark.title || "Untitled"}"
+              URL: "${bookmark.url}"
+      `;
 
-            Choose ONE or MORE relevant categories from the required enum list and provide a one-sentence summary.
-            Your response MUST be a JSON object matching the required schema.
+    // THIS IS THE DYNAMIC PART:
+    // If pageContent is provided (not null), add it to the prompt.
+    if (pageContent) {
+      promptContext += `
+
+          The content of the page is as follows:
+          """
+          ${pageContent}
+          """
         `;
+    }
+
+    const prompt = `
+              ${promptContext}
+
+              Based on all the available information (title, URL, and page content if provided),
+              choose ONE or MORE relevant categories from the required enum list and provide a
+              concise one-sentence summary that captures the main purpose of the page.
+              Your response MUST be a JSON object matching the required schema.
+          `;
     try {
       // Use the dynamically defined AI_CAT_SCHEMA
       const response = await session.prompt(prompt, {

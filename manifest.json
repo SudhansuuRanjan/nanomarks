@@ -3,12 +3,8 @@
   "name": "NanoMark",
   "version": "1.0",
   "description": "Uses on-device AI to categorize and summarize bookmarks.",
-  "permissions": [
-    "bookmarks",
-    "storage",
-    "favicon",
-    "tabs"
-  ],
+  "permissions": ["bookmarks", "storage", "favicon", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
