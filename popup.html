@@ -1,125 +1,104 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AI Bookmarks</title>
-        <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-        />
-        <link rel="stylesheet" href="style.css" />
-    </head>
 
-    <body>
-        <div class="title-bar">
-            <div>
-                <h2>NanoMarks</h2>
-                <p class="subheading">
-                    Manage your bookmarks with on-device AI (Gemini Nano).
-                </p>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Bookmarks</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="title-bar">
+        <div>
+            <h2>NanoMarks</h2>
+            <p class="subheading">
+                Manage your bookmarks with on-device AI (Gemini Nano).
+            </p>
+        </div>
+        <div class="title-bar-actions">
+            <!-- NEW "Manage Categories" Button -->
+            <button id="manage-categories-btn" class="btn-icon" title="Manage Categories">
+                <span class="material-symbols-outlined">label</span>
+            </button>
+
+            <button id="add-current-bookmark" class="btn-icon" title="Add current page to bookmarks">
+                <span class="material-symbols-outlined">bookmark_add</span>
+            </button>
+            <button id="export-button" class="btn-icon" title="Export all data to JSON">
+                <span class="material-symbols-outlined">download</span>
+            </button>
+            <label class="theme-switch">
+                <input type="checkbox" id="theme-toggle" />
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" id="search-box" placeholder="Filter bookmarks..." />
+        </div>
+
+        <div id="category-filter-pills"></div>
+    </div>
+
+    <div class="filter-bar-secondary">
+        <div id="results-count"></div>
+        <div class="filter-controls">
+            <span>Sort: </span>
+            <select id="sort-filter">
+                <option value="newest" selected>Newest First</option>
+                <option value="oldest">Oldest First</option>
+            </select>
+            <span>Status: </span>
+            <select id="view-status-filter">
+                <option value="all-status" selected>All Items</option>
+                <option value="unviewed">Unviewed</option>
+                <option value="viewed">Viewed</option>
+            </select>
+        </div>
+    </div>
+    <div id="init-screen">
+        <button id="scan-button">Scan Bookmarks</button>
+        <button id="reset-button" class="btn-danger">Reset Cache</button>
+    </div>
+
+    <div id="loading-screen" class="hidden">
+        <div class="loader"></div>
+        <p id="loading-status">Scanning bookmarks...</p>
+    </div>
+
+    <div id="error-screen" class="hidden">
+        <p><strong>AI Not Available.</strong></p>
+    </div>
+
+    <div id="results-container"></div>
+
+    <!-- NEW Category Management Modal -->
+    <div id="category-modal-backdrop" class="modal-backdrop hidden">
+        <div id="category-modal" class="modal-content">
+            <h3>Manage Categories</h3>
+            <div id="category-manager-list">
+                <!-- Categories will be rendered here by JS -->
             </div>
-            <div class="title-bar-actions">
-                <!-- NEW "Manage Categories" Button -->
-                <button
-                    id="manage-categories-btn"
-                    class="btn-icon"
-                    title="Manage Categories"
-                >
-                    <span class="material-symbols-outlined">label</span>
-                </button>
-
-                <button
-                    id="add-current-bookmark"
-                    class="btn-icon"
-                    title="Add current page to bookmarks"
-                >
-                    <span class="material-symbols-outlined">bookmark_add</span>
-                </button>
-                <button
-                    id="export-button"
-                    class="btn-icon"
-                    title="Export all data to JSON"
-                >
-                    <span class="material-symbols-outlined">download</span>
-                </button>
-                <label class="theme-switch">
-                    <input type="checkbox" id="theme-toggle" />
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="header">
-            <div class="search-container">
-                <span class="material-symbols-outlined search-icon"
-                    >search</span
-                >
-                <input
-                    type="text"
-                    id="search-box"
-                    placeholder="Filter bookmarks..."
-                />
-            </div>
-
-            <div id="category-filter-pills"></div>
-        </div>
-
-        <div class="filter-bar-secondary">
-            <div id="results-count"></div>
-            <div>
-                <span>Status: </span>
-                <select id="view-status-filter">
-                    <option value="all-status" selected>All Items</option>
-                    <option value="unviewed">Unviewed</option>
-                    <option value="viewed">Viewed</option>
-                </select>
-            </div>
-        </div>
-        <div id="init-screen">
-            <button id="scan-button">Scan Bookmarks</button>
-            <button id="reset-button" class="btn-danger">Reset Cache</button>
-        </div>
-
-        <div id="loading-screen" class="hidden">
-            <div class="loader"></div>
-            <p id="loading-status">Scanning bookmarks...</p>
-        </div>
-
-        <div id="error-screen" class="hidden">
-            <p><strong>AI Not Available.</strong></p>
-        </div>
-
-        <div id="results-container"></div>
-
-        <!-- NEW Category Management Modal -->
-        <div id="category-modal-backdrop" class="modal-backdrop hidden">
-            <div id="category-modal" class="modal-content">
-                <h3>Manage Categories</h3>
-                <div id="category-manager-list">
-                    <!-- Categories will be rendered here by JS -->
-                </div>
-                <div class="category-add-form">
-                    <input
-                        type="text"
-                        id="new-category-input"
-                        placeholder="New category name..."
-                    />
-                    <button id="add-category-btn" class="btn-primary-small">
-                        Add
-                    </button>
-                </div>
-                <button
-                    id="close-category-modal-btn"
-                    class="btn-icon modal-close-btn"
-                    title="Close"
-                >
-                    <span class="material-symbols-outlined">close</span>
+            <div class="category-add-form">
+                <input type="text" id="new-category-input" placeholder="New category name..." />
+                <button id="add-category-btn" class="btn-primary-small">
+                    Add
                 </button>
             </div>
+            <button id="close-category-modal-btn" class="btn-icon modal-close-btn" title="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <!-- End of new modal -->
+    </div>
+    <!-- End of new modal -->
 
-        <script src="popup.js"></script>
-    </body>
+    <script src="popup.js"></script>
+</body>
+
 </html>

@@ -112,11 +112,11 @@ body {
     border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: var(--primary-color);
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(22px);
 }
 
@@ -765,4 +765,98 @@ input:checked + .slider:before {
 
 .btn-primary-small:hover {
     background-color: var(--primary-color-hover);
+}
+
+/* --- Filter Controls Layout --- */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-controls span {
+    font-size: 13px;
+    color: var(--text-color-light);
+}
+
+#sort-filter {
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: var(--pill-bg);
+    color: var(--text-color-light);
+    border: 1px solid var(--pill-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#sort-filter:focus {
+    outline: 2px solid var(--primary-color);
+}
+
+/* --- Virtual Scrolling Container --- */
+#results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 12px;
+}
+
+/* Skeleton loading placeholder for virtual scrolling */
+.bookmark-card-skeleton {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 140px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.skeleton-favicon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--pill-bg) 25%, var(--pill-hover-bg) 50%, var(--pill-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeleton-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--pill-bg) 25%, var(--pill-hover-bg) 50%, var(--pill-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeleton-line.title {
+    width: 70%;
+    height: 18px;
+}
+
+.skeleton-line.url {
+    width: 40%;
+}
+
+.skeleton-line.summary {
+    width: 90%;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }

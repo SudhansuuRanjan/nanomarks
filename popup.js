@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const exportButton = document.getElementById("export-button");
   const addPageButton = document.getElementById("add-current-bookmark");
   const viewStatusFilter = document.getElementById("view-status-filter");
+  const sortFilter = document.getElementById("sort-filter");
 
   // --- NEW: Category Manager DOM Elements ---
   const manageCategoriesBtn = document.getElementById("manage-categories-btn");
@@ -80,8 +81,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   let masterBookmarkList = [];
   let currentCategoryFilter = "all";
   let currentViewFilter = "all-status"; // Defaulting to 'all' as per our last change
+  let currentSortOrder = "newest"; // Default sort order
   let categoryCounts = new Map();
   const CACHE_KEY = "aiBookmarkCache";
+
+  // --- Virtual Scrolling State ---
+  let currentFilteredList = [];
+  let renderedCount = 0;
+  const BATCH_SIZE = 25; // Render items in batches of 25
+  let isLoadingMore = false;
+  let scrollObserver = null;
 
   // --- Reset Button Listener ---
   resetButton.addEventListener("click", async () => {
@@ -244,6 +253,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyFiltersAndRender();
   });
 
+  sortFilter.addEventListener("change", (e) => {
+    currentSortOrder = e.target.value;
+    applyFiltersAndRender();
+  });
+
   // --- NEW: Category Modal Listeners ---
   manageCategoriesBtn.addEventListener("click", openCategoryModal);
   closeCategoryModalBtn.addEventListener("click", closeCategoryModal);
@@ -368,13 +382,166 @@ document.addEventListener("DOMContentLoaded", async () => {
     return button;
   }
 
+  // --- Card Creation Function ---
+  function createBookmarkCard(data) {
+    const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(data.url)}&size=32`;
+    let urlLinkHtml = "";
+    try {
+      const urlObj = new URL(data.url);
+      const baseHost = urlObj.hostname.replace(/^www\./, "");
+      const baseOrigin = urlObj.origin;
+      urlLinkHtml = `<a href="${baseOrigin}" target="_blank" class="card-url">${baseHost}</a>`;
+    } catch (e) {
+      /* Fails gracefully */
+    }
+
+    let categoryHtml = "";
+    if (data.category && Array.isArray(data.category)) {
+      for (const cat of data.category) {
+        if (categorySet.has(cat)) {
+          categoryHtml += `<span class="card-category">${cat}</span>`;
+        }
+      }
+    }
+    if (categoryHtml === "") {
+      categoryHtml += `<span class="card-category">Other</span>`;
+    }
+
+    const isImportant = data.isImportant || false;
+    const isViewed = data.isViewed || false;
+
+    const starTitle = isImportant ? "Unmark as important" : "Mark as important";
+    const starActive = isImportant ? "important-active" : "";
+
+    const viewIcon = isViewed ? "visibility" : "visibility_off";
+    const viewTitle = isViewed ? "Mark as unread" : "Mark as read";
+    const viewActive = isViewed ? "viewed-active" : "";
+
+    const cardViewedClass = isViewed ? "is-viewed" : "";
+
+    let formattedDate = "";
+    if (data.dateAdded) {
+      formattedDate = new Date(data.dateAdded).toLocaleDateString();
+    }
+
+    const card = document.createElement("div");
+    card.className = `bookmark-card ${cardViewedClass}`;
+
+    card.innerHTML = `
+      <img src="${faviconUrl}" class="card-favicon" alt="">
+      <div class="card-content">
+        <a href="${data.url}" target="_blank" class="card-title">${data.title || data.url}</a>
+        ${urlLinkHtml}
+        <div class="card-category-list">
+          ${categoryHtml}
+        </div>
+        <p class="card-summary">${data.summary || "No summary available."}</p>
+        <div class="card-actions">
+          <div class="card-action-buttons">
+            <button class="card-action-btn ${starActive}" data-action="toggle-important" data-url="${data.url}" title="${starTitle}">
+              <span class="material-symbols-outlined">star</span>
+            </button>
+            <button class="card-action-btn ${viewActive}" data-action="toggle-viewed" data-url="${data.url}" title="${viewTitle}">
+              <span class="material-symbols-outlined">${viewIcon}</span>
+            </button>
+            <button class="card-action-btn" data-action="copy-link" data-url="${data.url}" title="Copy Link">
+              <span class="material-symbols-outlined">link</span>
+            </button>
+          </div>
+          <span class="card-date">Added: ${formattedDate}</span>
+        </div>
+      </div>
+      <button class="delete-bookmark-btn" data-bookmark-id="${data.id}" title="Delete Bookmark">&times;</button>
+    `;
+
+    return card;
+  }
+
   function renderList(bookmarksToRender) {
+    // Clean up previous observer
+    if (scrollObserver) {
+      scrollObserver.disconnect();
+      scrollObserver = null;
+    }
+
     resultsContainer.innerHTML = "";
-    // Sort the list before rendering: new items (no dateAdded) or newest items first
-    bookmarksToRender.sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
-    bookmarksToRender.forEach((item) => {
-      renderBookmarkCard(item);
-    });
+    renderedCount = 0;
+    isLoadingMore = false;
+
+    // Sort the list based on current sort order
+    if (currentSortOrder === "newest") {
+      bookmarksToRender.sort((a, b) => (b.dateAdded || 0) - (a.dateAdded || 0));
+    } else {
+      bookmarksToRender.sort((a, b) => (a.dateAdded || 0) - (b.dateAdded || 0));
+    }
+
+    // Store the sorted/filtered list for virtual rendering
+    currentFilteredList = bookmarksToRender;
+
+    if (currentFilteredList.length === 0) {
+      return;
+    }
+
+    // Render initial batch
+    renderNextBatch();
+
+    // Set up intersection observer for infinite scroll
+    setupScrollObserver();
+  }
+
+  function renderNextBatch() {
+    if (isLoadingMore || renderedCount >= currentFilteredList.length) {
+      return;
+    }
+
+    isLoadingMore = true;
+    const endIndex = Math.min(renderedCount + BATCH_SIZE, currentFilteredList.length);
+
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+
+    for (let i = renderedCount; i < endIndex; i++) {
+      const card = createBookmarkCard(currentFilteredList[i]);
+      fragment.appendChild(card);
+    }
+
+    resultsContainer.appendChild(fragment);
+    renderedCount = endIndex;
+    isLoadingMore = false;
+  }
+
+  function setupScrollObserver() {
+    // Create a sentinel element at the bottom
+    const sentinel = document.createElement("div");
+    sentinel.className = "scroll-sentinel";
+    sentinel.style.height = "1px";
+    resultsContainer.appendChild(sentinel);
+
+    scrollObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && renderedCount < currentFilteredList.length) {
+            // Remove the old sentinel
+            sentinel.remove();
+
+            // Render next batch
+            renderNextBatch();
+
+            // Add sentinel back at the bottom if there are more items
+            if (renderedCount < currentFilteredList.length) {
+              resultsContainer.appendChild(sentinel);
+            }
+          }
+        });
+      },
+      {
+        root: null, // Use the viewport (document scroll)
+        rootMargin: "200px", // Trigger 200px before reaching the bottom
+        threshold: 0,
+      }
+    );
+
+    scrollObserver.observe(sentinel);
   }
 
   // --- 4. Core AI Processing Loop (Categorization) ---
@@ -840,88 +1007,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         applyFiltersAndRender();
       }
     }
-  }
-
-  // --- MODIFIED: renderBookmarkCard now includes the date ---
-  function renderBookmarkCard(data) {
-    const faviconUrl = `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(data.url)}&size=32`;
-    let urlLinkHtml = "";
-    try {
-      const urlObj = new URL(data.url);
-      const baseHost = urlObj.hostname.replace(/^www\./, "");
-      const baseOrigin = urlObj.origin;
-      urlLinkHtml = `<a href="${baseOrigin}" target="_blank" class="card-url">${baseHost}</a>`;
-    } catch (e) {
-      /* Fails gracefully */
-    }
-
-    let categoryHtml = "";
-    if (data.category && Array.isArray(data.category)) {
-      for (const cat of data.category) {
-        // Only render categories that still exist in our master list
-        if (categorySet.has(cat)) {
-          categoryHtml += `<span class="card-category">${cat}</span>`;
-        }
-      }
-    }
-    // If after filtering, no categories are left, show "Other"
-    if (categoryHtml === "") {
-      categoryHtml += `<span class="card-category">Other</span>`;
-    }
-
-    const isImportant = data.isImportant || false;
-    const isViewed = data.isViewed || false;
-
-    const starIcon = isImportant ? "star" : "star_outline";
-    const starTitle = isImportant ? "Unmark as important" : "Mark as important";
-    const starActive = isImportant ? "important-active" : "";
-
-    const viewIcon = isViewed ? "visibility" : "visibility_off";
-    const viewTitle = isViewed ? "Mark as unread" : "Mark as read";
-    const viewActive = isViewed ? "viewed-active" : "";
-
-    const cardViewedClass = isViewed ? "is-viewed" : "";
-
-    // --- NEW: Format the date ---
-    let formattedDate = "";
-    if (data.dateAdded) {
-      // Formats the timestamp (e.g., 1678886400000) into a local date (e.g., "9/16/2025")
-      formattedDate = new Date(data.dateAdded).toLocaleDateString();
-    }
-
-    const card = document.createElement("div");
-    card.className = `bookmark-card ${cardViewedClass}`;
-
-    // MODIFIED: Added the formattedDate to the new layout
-    card.innerHTML = `
-            <img src="${faviconUrl}" class="card-favicon" alt="">
-            <div class="card-content">
-                <a href="${data.url}" target="_blank" class="card-title">${data.title || data.url}</a>
-                ${urlLinkHtml}
-                <div class="card-category-list">
-                    ${categoryHtml}
-                </div>
-                <p class="card-summary">${data.summary || "No summary available."}</p>
-
-                <div class="card-actions">
-                    <div class="card-action-buttons">
-                        <button class="card-action-btn ${starActive}" data-action="toggle-important" data-url="${data.url}" title="${starTitle}">
-                            <span class="material-symbols-outlined">star</span>
-                        </button>
-                        <button class="card-action-btn ${viewActive}" data-action="toggle-viewed" data-url="${data.url}" title="${viewTitle}">
-                            <span class="material-symbols-outlined">${viewIcon}</span>
-                        </button>
-                        <button class="card-action-btn" data-action="copy-link" data-url="${data.url}" title="Copy Link">
-                            <span class="material-symbols-outlined">link</span>
-                        </button>
-                    </div>
-                    <span class="card-date">Added: ${formattedDate}</span>
-                </div>
-            </div>
-            <button class="delete-bookmark-btn" data-bookmark-id="${data.id}" title="Delete Bookmark">&times;</button>
-        `;
-
-    resultsContainer.appendChild(card);
   }
 
   // --- NEW: Section 7. Category Manager Functions ---
