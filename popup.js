@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let aiCache = {};
   let uncachedBookmarks = [];
   let masterBookmarkList = [];
-  let currentCategoryFilter = "all";
+  let selectedCategories = new Set(["all"]);
   let currentViewFilter = "all-status"; // Defaulting to 'all' as per our last change
   let currentSortOrder = "newest"; // Default sort order
   let categoryCounts = new Map();
@@ -237,6 +237,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // --- NEW: Cleanup Manager DOM Elements ---
+  const cleanupBtn = document.getElementById("cleanup-btn");
+  const cleanupModalBackdrop = document.getElementById(
+    "cleanup-modal-backdrop",
+  );
+  const closeCleanupModalBtn = document.getElementById(
+    "close-cleanup-modal-btn",
+  );
+  const cancelCleanupBtn = document.getElementById("cancel-cleanup-btn");
+  const cleanupManagerList = document.getElementById("cleanup-manager-list");
+  const deleteAllDeadBtn = document.getElementById("delete-all-dead-btn");
+  let deadLinksCache = []; // Store links found during scan
+
+  // --- Utility: Debounce ---
+  function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+  }
+
   // --- 2. Event Listeners (MODIFIED) ---
   scanButton.addEventListener("click", () => {
     if (uncachedBookmarks.length > 0) {
@@ -244,7 +268,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  searchBox.addEventListener("input", applyFiltersAndRender);
+  const debouncedSearch = debounce(applyFiltersAndRender, 200);
+  searchBox.addEventListener("input", debouncedSearch);
+
   exportButton.addEventListener("click", handleExportJSON);
   addPageButton.addEventListener("click", handleAddCurrentPage);
 
@@ -301,7 +327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function applyFiltersAndRender() {
-    const searchQuery = searchBox.value.toLowerCase();
+    const searchQuery = searchBox.value.toLowerCase().trim();
     let filteredList = masterBookmarkList;
 
     if (currentViewFilter === "unviewed") {
@@ -310,26 +336,39 @@ document.addEventListener("DOMContentLoaded", async () => {
       filteredList = filteredList.filter((item) => item.isViewed);
     }
 
-    if (currentCategoryFilter === "--important") {
-      filteredList = filteredList.filter((item) => item.isImportant);
-    } else if (currentCategoryFilter !== "all") {
-      filteredList = filteredList.filter(
-        (item) =>
-          item.category && item.category.includes(currentCategoryFilter),
-      );
+    if (!selectedCategories.has("all")) {
+      filteredList = filteredList.filter((item) => {
+        if (selectedCategories.has("--important") && item.isImportant) return true;
+        if (item.category && item.category.some(cat => selectedCategories.has(cat))) return true;
+        return false;
+      });
     }
 
     if (searchQuery.length > 0) {
-      filteredList = filteredList.filter(
-        (item) =>
-          (item.title && item.title.toLowerCase().includes(searchQuery)) ||
-          (item.summary && item.summary.toLowerCase().includes(searchQuery)) ||
-          (item.url && item.url.toLowerCase().includes(searchQuery)),
-      );
+      const tokens = searchQuery.split(/\s+/);
+      filteredList = filteredList.filter((item) => {
+        const itemText = [
+          item.title || "",
+          item.summary || "",
+          item.url || ""
+        ].join(" ").toLowerCase();
+
+        return tokens.every(token => itemText.includes(token));
+      });
     }
 
     renderList(filteredList);
     resultsCountEl.textContent = `${filteredList.length} results found`;
+
+    // Handle empty state
+    const emptyState = document.getElementById("empty-state");
+    if (filteredList.length === 0) {
+      emptyState.classList.remove("hidden");
+      resultsContainer.classList.add("hidden");
+    } else {
+      emptyState.classList.add("hidden");
+      resultsContainer.classList.remove("hidden");
+    }
   }
 
   function renderCategoryPills(counts) {
@@ -337,13 +376,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const allCount = counts.get("all") || 0;
     const allButton = createPill("all", `All (${allCount})`);
-    if (currentCategoryFilter === "all") allButton.classList.add("active");
+    if (selectedCategories.has("all")) allButton.classList.add("active");
     categoryPillsContainer.appendChild(allButton);
 
     const impCount = counts.get("--important") || 0;
     if (impCount > 0) {
       const impButton = createPill("--important", `Important (${impCount})`);
-      if (currentCategoryFilter === "--important")
+      if (selectedCategories.has("--important"))
         impButton.classList.add("active");
       categoryPillsContainer.appendChild(impButton);
     }
@@ -357,7 +396,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Show "Other" even if 0, but other categories only if > 0
       if (count > 0 || category === "Other") {
         const pillButton = createPill(category, `${category} (${count})`);
-        if (currentCategoryFilter === category) {
+        if (selectedCategories.has(category)) {
           pillButton.classList.add("active");
         }
         categoryPillsContainer.appendChild(pillButton);
@@ -371,12 +410,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     button.dataset.category = id;
     button.textContent = text;
     button.addEventListener("click", (e) => {
-      const currentActive = categoryPillsContainer.querySelector(".active");
-      if (currentActive) {
-        currentActive.classList.remove("active");
+      if (id === "all") {
+        selectedCategories.clear();
+        selectedCategories.add("all");
+      } else {
+        selectedCategories.delete("all");
+        if (selectedCategories.has(id)) {
+          selectedCategories.delete(id);
+          if (selectedCategories.size === 0) selectedCategories.add("all");
+        } else {
+          selectedCategories.add(id);
+        }
       }
-      e.target.classList.add("active");
-      currentCategoryFilter = id;
+
+      // Update UI active states visually without a full re-render of pills
+      document.querySelectorAll(".category-pill").forEach(pill => {
+        if (selectedCategories.has(pill.dataset.category)) {
+          pill.classList.add("active");
+        } else {
+          pill.classList.remove("active");
+        }
+      });
+
       applyFiltersAndRender();
     });
     return button;
@@ -424,18 +479,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       formattedDate = new Date(data.dateAdded).toLocaleDateString();
     }
 
+    let readingTimeHtml = "";
+    if (data.readingTime) {
+      readingTimeHtml = `<span class="card-reading-time"><span class="material-symbols-outlined" style="font-size: 14px;">schedule</span> ${data.readingTime} min read</span>`;
+    }
+
     const card = document.createElement("div");
     card.className = `bookmark-card ${cardViewedClass}`;
 
     card.innerHTML = `
-      <img src="${faviconUrl}" class="card-favicon" alt="">
-      <div class="card-content">
-        <a href="${data.url}" target="_blank" class="card-title">${data.title || data.url}</a>
-        ${urlLinkHtml}
-        <div class="card-category-list">
-          ${categoryHtml}
-        </div>
-        <p class="card-summary">${data.summary || "No summary available."}</p>
+      <div class="upper_card">
+            <img src="${faviconUrl}" class="card-favicon" alt="">
+            <div class="card-content">
+              <a href="${data.url}" target="_blank" class="card-title">${data.title || data.url}</a>
+              ${urlLinkHtml}
+            </div>
+      </div>
+      <div>
+      <div class="card-category-list">
+                ${categoryHtml}
+              </div>
+      <p class="card-summary">${data.summary || "No summary available."}</p>
         <div class="card-actions">
           <div class="card-action-buttons">
             <button class="card-action-btn ${starActive}" data-action="toggle-important" data-url="${data.url}" title="${starTitle}">
@@ -448,7 +512,10 @@ document.addEventListener("DOMContentLoaded", async () => {
               <span class="material-symbols-outlined">link</span>
             </button>
           </div>
-          <span class="card-date">Added: ${formattedDate}</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            ${readingTimeHtml}
+            <span class="card-date">Added: ${formattedDate}</span>
+          </div>
         </div>
       </div>
       <button class="delete-bookmark-btn" data-bookmark-id="${data.id}" title="Delete Bookmark">&times;</button>
@@ -558,7 +625,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const total = bookmarksToProcess.length;
     let count = 0;
     let batchCounter = 0;
-    const BATCH_SIZE = 30;
+    const BATCH_SIZE = 20;
 
     for (const bookmark of bookmarksToProcess) {
       count++;
@@ -727,6 +794,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       aiSession.destroy(); // --- Step 4: Process results (unchanged) ---
 
       let cacheData;
+      let calculatedReadingTime = null;
+      if (pageContent) {
+        const wordCount = pageContent.split(/\s+/).length;
+        calculatedReadingTime = Math.max(1, Math.ceil(wordCount / 200));
+      }
+
       if (
         aiData &&
         aiData.summary &&
@@ -742,6 +815,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             category: validCategories,
             isImportant: false,
             isViewed: false,
+            readingTime: calculatedReadingTime
           };
         } else {
           cacheData = {
@@ -749,6 +823,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             category: ["Other"],
             isImportant: false,
             isViewed: false,
+            readingTime: calculatedReadingTime
           };
         }
       } else {
@@ -758,6 +833,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           summary: summary,
           isImportant: false,
           isViewed: false,
+          readingTime: calculatedReadingTime
         };
       }
       const fullData = { ...newNode, ...cacheData };
@@ -783,6 +859,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function createSession() {
     return LanguageModel.create({
+      systemPrompt: "You are an expert digital librarian and summarization AI. Your role is to accurately categorize bookmarks using a strict predefined taxonomy and to write high-quality, descriptive summaries. Focus on the core value and primary subject of the content, avoiding generic filler language.",
       expectedInputs: [
         {
           type: "text",
@@ -895,10 +972,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const prompt = `
               ${promptContext}
 
-              Based on all the available information (title, URL, and page content if provided),
-              choose ONE or MORE relevant categories from the required enum list and provide a
-              concise one-sentence summary that captures the main purpose of the page.
-              Your response MUST be a JSON object matching the required schema.
+              Task:
+              1. Categorize precisely: Choose ONE or MORE of the most relevant categories from the provided enum list.
+              2. Summarize effectively: Provide a highly concise, descriptive summary (1-2 sentences max) capturing the main topic or value proposition. Do not start with "This page is about".
+
+              Your response MUST be a JSON object exactly matching the required schema.
           `;
     try {
       // Use the dynamically defined AI_CAT_SCHEMA
@@ -1139,6 +1217,97 @@ document.addEventListener("DOMContentLoaded", async () => {
       categorySet = new Set(originalList);
     }
   }
+
+  // --- NEW: Section 8. Link Rot Detection (Cleanup) ---
+
+  async function startCleanupScan() {
+    if (masterBookmarkList.length === 0) return;
+
+    showLoading("Scanning for dead links...");
+    deadLinksCache = [];
+    cleanupBtn.disabled = true;
+
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < masterBookmarkList.length; i += BATCH_SIZE) {
+      const batch = masterBookmarkList.slice(i, i + BATCH_SIZE);
+      const checks = batch.map(async (bookmark) => {
+        try {
+          const response = await chrome.runtime.sendMessage({ action: "pingUrl", url: bookmark.url });
+          if (response && response.dead) {
+            deadLinksCache.push(bookmark);
+          }
+        } catch (err) {
+          // Background script crashed or timeout
+          deadLinksCache.push(bookmark);
+        }
+      });
+      await Promise.allSettled(checks);
+      loadingStatus.textContent = `Scanning: ${Math.min(i + BATCH_SIZE, masterBookmarkList.length)} / ${masterBookmarkList.length}`;
+    }
+
+    cleanupBtn.disabled = false;
+    showInitialScreen();
+
+    if (deadLinksCache.length > 0) {
+      renderCleanupModal();
+      cleanupModalBackdrop.classList.remove("hidden");
+    } else {
+      alert("Great news! No dead links found.");
+    }
+  }
+
+  function renderCleanupModal() {
+    cleanupManagerList.innerHTML = "";
+    deadLinksCache.forEach(bookmark => {
+      const item = document.createElement("div");
+      item.className = "category-manager-item";
+      item.innerHTML = `
+        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90%;">
+            <a href="${bookmark.url}" target="_blank" style="color: var(--danger-color); text-decoration: none;">${bookmark.title || bookmark.url}</a>
+        </div>
+      `;
+      cleanupManagerList.appendChild(item);
+    });
+  }
+
+  function closeCleanupModal() {
+    cleanupModalBackdrop.classList.add("hidden");
+  }
+
+  async function handleBulkDeleteDeadLinks() {
+    if (!confirm(`Are you sure you want to permanently delete these ${deadLinksCache.length} dead links from Chrome?`)) return;
+
+    showLoading("Deleting dead links...");
+    closeCleanupModal();
+
+    let deleteChecks = deadLinksCache.map(async (bk) => {
+      try {
+        await chrome.bookmarks.remove(bk.id);
+        if (aiCache[bk.url]) {
+          delete aiCache[bk.url];
+        }
+      } catch (e) {
+        console.error("Failed to delete", bk.url, e);
+      }
+    });
+
+    await Promise.allSettled(deleteChecks);
+    await chrome.storage.local.set({ [CACHE_KEY]: aiCache });
+
+    const deadIds = new Set(deadLinksCache.map(b => b.id));
+    masterBookmarkList = masterBookmarkList.filter(b => !deadIds.has(b.id));
+
+    deadLinksCache = [];
+    calculateAllCategoryCounts();
+    renderCategoryPills(categoryCounts);
+    applyFiltersAndRender();
+    showInitialScreen();
+  }
+
+  cleanupBtn.addEventListener("click", startCleanupScan);
+  closeCleanupModalBtn.addEventListener("click", closeCleanupModal);
+  cancelCleanupBtn.addEventListener("click", closeCleanupModal);
+  deleteAllDeadBtn.addEventListener("click", handleBulkDeleteDeadLinks);
 
   // --- Run the app ---
   initializeApp();

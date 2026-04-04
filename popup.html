@@ -5,6 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Bookmarks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="style.css" />
@@ -27,6 +30,9 @@
             <button id="add-current-bookmark" class="btn-icon" title="Add current page to bookmarks">
                 <span class="material-symbols-outlined">bookmark_add</span>
             </button>
+            <button id="cleanup-btn" class="btn-icon" title="Scan for dead links">
+                <span class="material-symbols-outlined">delete_sweep</span>
+            </button>
             <button id="export-button" class="btn-icon" title="Export all data to JSON">
                 <span class="material-symbols-outlined">download</span>
             </button>
@@ -40,7 +46,7 @@
     <div class="header">
         <div class="search-container">
             <span class="material-symbols-outlined search-icon">search</span>
-            <input type="text" id="search-box" placeholder="Filter bookmarks..." />
+            <input type="search" id="search-box" placeholder="Filter bookmarks..." />
         </div>
 
         <div id="category-filter-pills"></div>
@@ -57,7 +63,7 @@
             <span>Status: </span>
             <select id="view-status-filter">
                 <option value="all-status" selected>All Items</option>
-                <option value="unviewed">Unviewed</option>
+                <option value="unviewed">To-Read (Unviewed)</option>
                 <option value="viewed">Viewed</option>
             </select>
         </div>
@@ -77,6 +83,10 @@
     </div>
 
     <div id="results-container"></div>
+    <div id="empty-state" class="hidden">
+        <span class="material-symbols-outlined empty-icon">search_off</span>
+        <p>No bookmarks found matching your criteria.</p>
+    </div>
 
     <!-- NEW Category Management Modal -->
     <div id="category-modal-backdrop" class="modal-backdrop hidden">
@@ -92,6 +102,29 @@
                 </button>
             </div>
             <button id="close-category-modal-btn" class="btn-icon modal-close-btn" title="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+    <!-- End of new modal -->
+
+    <!-- NEW Cleanup Management Modal -->
+    <div id="cleanup-modal-backdrop" class="modal-backdrop hidden">
+        <div id="cleanup-modal" class="modal-content">
+            <h3>Dead Links Report</h3>
+            <p class="subheading" style="margin-bottom: 12px;">These bookmarks are returning errors and might be dead.</p>
+            <div id="cleanup-manager-list" class="dead-links-list">
+                <!-- Links will be rendered here by JS -->
+            </div>
+            <div class="cleanup-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button id="cancel-cleanup-btn" class="btn-icon" style="width: auto; padding: 0 16px; border-radius: var(--radius-md);" title="Cancel">
+                    Cancel
+                </button>
+                <button id="delete-all-dead-btn" class="btn-danger" style="padding: 8px 16px;">
+                    Delete Dead Links
+                </button>
+            </div>
+            <button id="close-cleanup-modal-btn" class="btn-icon modal-close-btn" title="Close">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
